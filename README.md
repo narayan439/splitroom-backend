@@ -18,6 +18,32 @@ Generate a signing secret with a secure random generator, for example:
 `openssl rand -base64 32`. Do not commit the secret. The application fails to
 start if the secret is absent, invalid, or too short.
 
+## Deploying on Render
+
+This repository includes a Render Blueprint (`render.yaml`) for the Docker
+web service. In Render, create a Blueprint from this repository and provide
+the following service environment variables when prompted:
+
+| Variable | Value |
+| --- | --- |
+| `SPRING_DATASOURCE_URL` | JDBC URL for a reachable MySQL database, such as `jdbc:mysql://HOST:3306/DATABASE` |
+| `SPRING_DATASOURCE_USERNAME` | MySQL username |
+| `SPRING_DATASOURCE_PASSWORD` | MySQL password |
+| `APP_JWT_SECRET` | Base64-encoded output from `openssl rand -base64 32` |
+
+Render does not provide a managed MySQL database. Create or use an external
+MySQL-compatible database and allow the Render service to connect to it. Apply
+all required SQL migrations to that database before deploying; the production
+profile validates the schema and does not create or migrate tables
+automatically. Keep database credentials and the JWT secret in Render's
+environment settings, never in source control.
+
+The Blueprint sets `SPRING_PROFILES_ACTIVE=prod`, configures CORS for
+`https://splitroom-frontend.onrender.com`, disables public Swagger, and uses
+`/healthz` as the Render health check. Render supplies `PORT` automatically.
+After the first deploy, use the service's `onrender.com` URL as the frontend's
+backend API base URL.
+
 The unauthenticated `/healthz` endpoint runs `SELECT 1` against the configured
 database and is intended for the hosting platform's health check. It reports
 healthy only when the application can reach MySQL.
