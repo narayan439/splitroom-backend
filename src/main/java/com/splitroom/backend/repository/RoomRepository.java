@@ -2,14 +2,11 @@ package com.splitroom.backend.repository;
 
 import com.splitroom.backend.entity.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
-
-import jakarta.persistence.LockModeType;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
@@ -21,7 +18,9 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Query("SELECT r FROM Room r JOIN FETCH r.createdBy WHERE r.roomId = :roomId")
     Optional<Room> findWithCreatorByRoomId(@Param("roomId") Long roomId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT r FROM Room r WHERE r.roomId = :roomId")
+    @Query(
+            value = "SELECT * FROM rooms WHERE room_id = :roomId FOR UPDATE",
+            nativeQuery = true
+    )
     Optional<Room> findByRoomIdForUpdate(@Param("roomId") Long roomId);
 }
