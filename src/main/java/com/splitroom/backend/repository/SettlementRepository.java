@@ -2,9 +2,7 @@ package com.splitroom.backend.repository;
 
 import com.splitroom.backend.entity.Settlement;
 import com.splitroom.backend.entity.SettlementStatus;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -63,13 +61,14 @@ public interface SettlementRepository
             @Param("settlementId") Long settlementId
     );
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT settlement
-            FROM Settlement settlement
-            WHERE settlement.room.roomId = :roomId
-              AND settlement.settlementId = :settlementId
-            """)
+    @Query(
+            value = """
+                    SELECT * FROM settlements
+                    WHERE room_id = :roomId AND settlement_id = :settlementId
+                    FOR UPDATE
+                    """,
+            nativeQuery = true
+    )
     Optional<Settlement> findByRoomIdAndSettlementIdForUpdate(
             @Param("roomId") Long roomId,
             @Param("settlementId") Long settlementId
