@@ -1,9 +1,7 @@
 package com.splitroom.backend.repository;
 
 import com.splitroom.backend.entity.Expense;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -43,13 +41,14 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("expenseId") Long expenseId
     );
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT e
-            FROM Expense e
-            WHERE e.room.roomId = :roomId
-              AND e.expenseId = :expenseId
-            """)
+    @Query(
+            value = """
+                    SELECT * FROM expenses
+                    WHERE room_id = :roomId AND expense_id = :expenseId
+                    FOR UPDATE
+                    """,
+            nativeQuery = true
+    )
     Optional<Expense> findByRoomIdAndExpenseIdForUpdate(
             @Param("roomId") Long roomId,
             @Param("expenseId") Long expenseId
