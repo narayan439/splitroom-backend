@@ -3,7 +3,9 @@ package com.splitroom.backend.config;
 import com.splitroom.backend.security.JwtAuthenticationEntryPoint;
 import com.splitroom.backend.security.JwtAuthenticationFilter;
 import com.splitroom.backend.security.SplitRoomUserDetailsService;
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -46,6 +48,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                 )
                 .authorizeHttpRequests(authorize -> {
+                    authorize.dispatcherTypeMatchers(DispatcherType.ERROR)
+                            .permitAll();
                     authorize.requestMatchers("/healthz").permitAll();
                     authorize.requestMatchers(
                             HttpMethod.POST,
@@ -73,6 +77,17 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable());
         return http.build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter>
+    jwtAuthenticationFilterRegistration(
+            JwtAuthenticationFilter jwtAuthenticationFilter
+    ) {
+        FilterRegistrationBean<JwtAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(jwtAuthenticationFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
