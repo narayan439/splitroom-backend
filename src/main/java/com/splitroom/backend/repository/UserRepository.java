@@ -1,9 +1,7 @@
 package com.splitroom.backend.repository;
 
 import com.splitroom.backend.entity.User;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -21,7 +19,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByPhoneAndUserIdNot(String phone, Long userId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT u FROM User u WHERE u.userId = :userId")
+    @Query(
+            value = "SELECT * FROM users WHERE user_id = :userId FOR UPDATE",
+            nativeQuery = true
+    )
     Optional<User> findByUserIdForUpdate(@Param("userId") Long userId);
 }
