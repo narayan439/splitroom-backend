@@ -4,9 +4,7 @@ import com.splitroom.backend.entity.RoomMember;
 import com.splitroom.backend.entity.Room;
 import com.splitroom.backend.entity.UserRole;
 import com.splitroom.backend.dto.response.MemberBalanceResponse;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -37,8 +35,10 @@ public interface RoomMemberRepository
             Long userId
     );
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT member FROM RoomMember member WHERE member.user.userId = :userId")
+    @Query(
+            value = "SELECT * FROM room_members WHERE user_id = :userId FOR UPDATE",
+            nativeQuery = true
+    )
     Optional<RoomMember> findByUser_UserIdForUpdate(
             @Param("userId") Long userId
     );
