@@ -9,6 +9,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -25,6 +27,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtTokenService jwtTokenService;
     private final UserDetailsService userDetailsService;
     private final UserRepository userRepository;
@@ -39,6 +43,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization == null
                 || !authorization.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            if (isProtectedApiRequest(request)) {
+                logger.warn(
+                        "Missing bearer token for {} {}",
+                        request.getMethod(),
+                        request.getRequestURI()
+                );
+            }
             filterChain.doFilter(request, response);
             return;
         }
@@ -88,6 +99,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtException | IllegalArgumentException
                  | AuthenticationException exception) {
             SecurityContextHolder.clearContext();
+            logger.warn(
+                    "Rejected bearer token for {} {} ({})",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    exception.getClass().getSimpleName()
+            );
             authenticationEntryPoint.commence(
                     request,
                     response,
@@ -99,5 +116,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isProtectedApiRequest(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/")
+                && !path.equals("/api/auth/login")
+                && !path.equals("/api/auth/register");
     }
 }
