@@ -3,7 +3,10 @@ package com.splitroom.backend.exception;
 import com.splitroom.backend.dto.response.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -19,6 +22,9 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(
@@ -93,6 +99,24 @@ public class GlobalExceptionHandler {
         return error(
                 HttpStatus.CONFLICT,
                 "The request conflicts with existing data",
+                request
+        );
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiErrorResponse> handleDatabaseFailure(
+            DataAccessException exception,
+            HttpServletRequest request
+    ) {
+        logger.error(
+                "Database operation failed for {} {}",
+                request.getMethod(),
+                request.getRequestURI(),
+                exception
+        );
+        return error(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "A database operation could not be completed",
                 request
         );
     }
