@@ -2,9 +2,7 @@ package com.splitroom.backend.repository;
 
 import com.splitroom.backend.entity.InvitationStatus;
 import com.splitroom.backend.entity.RoomInvitation;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -63,12 +61,10 @@ public interface RoomInvitationRepository
             @Param("invitationId") Long invitationId
     );
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT invitation
-            FROM RoomInvitation invitation
-            WHERE invitation.invitationId = :invitationId
-            """)
+    @Query(
+            value = "SELECT * FROM room_invitations WHERE invitation_id = :invitationId FOR UPDATE",
+            nativeQuery = true
+    )
     Optional<RoomInvitation> findByInvitationIdForUpdate(
             @Param("invitationId") Long invitationId
     );
